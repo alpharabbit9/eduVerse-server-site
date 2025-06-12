@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 const port = process.env.PORT || 5000;
@@ -31,13 +31,28 @@ async function run() {
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-    const courseCollection = client.db('eduverseDB').collection('courses');
+    const courseCollection = client.db('eduerseDB').collection('courses');
+
+
+    //! Course Related API
+
+    app.get('/courses' , async(req,res) =>{
+      const result = await courseCollection.find().toArray();
+      res.send(result)
+    })
+
+    app.get('/courses/:id' , async(req,res) =>{
+      const  id = req.params.id;
+      const query = {_id : new ObjectId(id)};
+      const result = await courseCollection.findOne(query);
+      res.send(result) 
+    })
 
 
     app.get('/learnToday'  , async (req,res) =>{
         const result = await courseCollection.find()
         .sort({totalEnrollment :  -1})
-        .limit(6)
+        .limit(4)
         .toArray();
         res.send(result)
     })
