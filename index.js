@@ -32,8 +32,37 @@ async function run() {
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     const courseCollection = client.db('eduerseDB').collection('courses');
+    const userCollection = client.db('eduerseDB').collection('users');
 
 
+    // ! User Related API
+
+    app.get('/users' , async(req,res) =>{
+
+      const result = await userCollection.find().toArray()
+
+      res.send(result)
+    })
+
+    app.post('/users' , async(req,res) =>{
+
+      const user = req.body ;
+
+      console.log(user)
+
+      const query = {email : user.email}
+
+      const existUser = await userCollection.findOne(query);
+
+      if(existUser)
+      {
+        return res.send({message : 'User Already Exist' , insertedId : null})
+      }
+
+
+
+      const result = await userCollection.insertOne(user)
+    })
     //! Course Related API
 
     app.get('/courses' , async(req,res) =>{
@@ -56,6 +85,9 @@ async function run() {
         .toArray();
         res.send(result)
     })
+
+
+    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
