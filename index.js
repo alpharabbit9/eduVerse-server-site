@@ -33,61 +33,113 @@ async function run() {
 
     const courseCollection = client.db('eduerseDB').collection('courses');
     const userCollection = client.db('eduerseDB').collection('users');
+    const teacherRequestCollection = client.db('eduerseDB').collection('teacherRequest');
 
 
     // ! User Related API
 
-    app.get('/users' , async(req,res) =>{
+    app.get('/users', async (req, res) => {
 
       const result = await userCollection.find().toArray()
 
       res.send(result)
     })
 
-    app.post('/users' , async(req,res) =>{
+    app.post('/users', async (req, res) => {
 
-      const user = req.body ;
+      const user = req.body;
 
       console.log(user)
 
-      const query = {email : user.email}
+      const query = { email: user.email }
 
       const existUser = await userCollection.findOne(query);
 
-      if(existUser)
-      {
-        return res.send({message : 'User Already Exist' , insertedId : null})
+      if (existUser) {
+        return res.send({ message: 'User Already Exist', insertedId: null })
       }
-
-
 
       const result = await userCollection.insertOne(user)
     })
+
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await userCollection.deleteOne(query);
+
+      res.send(result)
+    })
+
+
+    // !  Admin API 
+
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+
+      const filter = { _id: new ObjectId(id) };
+
+      const updatedDoc = {
+        $set:
+        {
+          role: 'admin'
+        }
+      }
+
+      const result = await userCollection.updateOne(filter, updatedDoc)
+
+      res.send(result)
+
+
+    })
+
+
+    // ! Teacher Related API
+
+    app.post('/teacherRequest' , async (req,res) =>{
+      const request = req.body;
+
+      const query = {email : req.body.teacher_email};
+
+      const isExist = await teacherRequestCollection.findOne(query)
+
+      if(isExist)
+      {
+         return res.status(400).send({ message: "Request already exists" });
+      }
+
+      const result = await teacherRequestCollection.insertOne(request);
+
+      res.send(result)
+    })
+
+
     //! Course Related API
 
-    app.get('/courses' , async(req,res) =>{
+    app.get('/courses', async (req, res) => {
       const result = await courseCollection.find().toArray();
       res.send(result)
     })
 
-    app.get('/courses/:id' , async(req,res) =>{
-      const  id = req.params.id;
-      const query = {_id : new ObjectId(id)};
+    app.get('/courses/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const result = await courseCollection.findOne(query);
-      res.send(result) 
+      res.send(result)
     })
 
 
-    app.get('/learnToday'  , async (req,res) =>{
-        const result = await courseCollection.find()
-        .sort({totalEnrollment :  -1})
+    app.get('/learnToday', async (req, res) => {
+      const result = await courseCollection.find()
+        .sort({ totalEnrollment: -1 })
         .limit(4)
         .toArray();
-        res.send(result)
+      res.send(result)
     })
 
 
-    
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -98,9 +150,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send("To achieve extraordinary things in lfe , you have to do extraordinary things")
+  res.send("To achieve extraordinary things in lfe , you have to do extraordinary things")
 })
 
 app.listen(port, () => {
-    console.log(`Reporting from port : ${port}`)
+  console.log(`Reporting from port : ${port}`)
 })
