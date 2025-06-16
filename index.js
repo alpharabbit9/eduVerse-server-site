@@ -97,6 +97,12 @@ async function run() {
 
     // ! Teacher Related API
 
+    app.get('/teacherRequest' , async (req ,res) =>{
+
+      const result = await teacherRequestCollection.find().toArray()
+      res.send(result)
+    })
+
     app.post('/teacherRequest' , async (req,res) =>{
       const request = req.body;
 
