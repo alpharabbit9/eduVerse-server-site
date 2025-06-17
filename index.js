@@ -72,6 +72,46 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/users/teacher/:email' , async(req,res) =>{
+
+      const email = req.params.email;
+
+      const filter = {email : email}
+
+      const updatedDoc = {
+        $set :
+        {
+
+          role : 'teacher' 
+        }
+      }
+
+      const result = await userCollection.updateOne(filter , updatedDoc);
+
+      res.send(result)
+
+
+
+    })
+
+    app.patch('/users/reject/:email' , async(req,res) =>{
+
+      const email = req.params.email;
+
+      const filter = {email:email}
+
+      const updatedDoc = {
+
+        $set : {
+          role : "student"
+        }
+      }
+
+      const result = await userCollection.updateOne(filter , updatedDoc);
+
+      res.send(result)
+    })
+
 
     // !  Admin API 
 
@@ -120,11 +160,62 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/teacherRequest/:id', async(req,res) =>{
+
+      const id = req.params.id ;
+
+      const filter = {_id : new ObjectId(id)}
+
+      const updatedDoc = {
+        $set : 
+        {
+          status : 'Approved'
+        }
+      }
+
+      const result = await teacherRequestCollection.updateOne(filter,updatedDoc);
+
+      res.send(result)
+    })
+
+    app.patch('/teacherRequest/reject/:id' , async(req,res) =>{
+
+      const id = req.params.id ;
+
+      const filter = {_id : new ObjectId(id)}
+
+      const updatedDoc = {
+
+        $set : {
+
+          status : "rejected"
+
+        }
+        
+      }
+
+      const result = await teacherRequestCollection.updateOne(filter,updatedDoc)
+
+      res.send(result)
+    })
+
+
+    
+
 
     //! Course Related API
 
     app.get('/courses', async (req, res) => {
       const result = await courseCollection.find().toArray();
+      res.send(result)
+    })
+
+    app.post('/courses' , async(req,res) =>{
+
+      const course = req.body ;
+
+      const result = await  courseCollection.insertOne(course)
+
       res.send(result)
     })
 
