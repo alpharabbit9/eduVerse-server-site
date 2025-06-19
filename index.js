@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // secret key
+
 
 
 const port = process.env.PORT || 5000;
@@ -35,6 +37,7 @@ async function run() {
     const ConfirmedCourseCollection = client.db('eduerseDB').collection('confirmedCourse');
     const userCollection = client.db('eduerseDB').collection('users');
     const teacherRequestCollection = client.db('eduerseDB').collection('teacherRequest');
+    const paymentsCollection = client.db('eduerseDB').collection('payments');
 
 
     // ! User Related API
@@ -44,6 +47,17 @@ async function run() {
       const result = await userCollection.find().toArray()
 
       res.send(result)
+    })
+
+    app.get('/users/profileDetails/:email' , async(req,res) =>{
+
+      const email = req.params.email ;
+
+      const query = {email :email};
+
+      const result = await userCollection.findOne(query);
+
+      res.send(result);
     })
 
     app.post('/users', async (req, res) => {
@@ -246,6 +260,17 @@ async function run() {
       res.send(result)
     })
 
+    app.delete('/course/delete/:id', async (req, res) => {
+
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await courseCollection.deleteOne(query);
+
+      res.send(result);
+    })
+
     app.patch('/courses/:id', async (req, res) => {
       const id = req.params.id;
 
@@ -318,12 +343,26 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/courses/:id', async (req, res) => {
+    app.get('/confirmedCourse/id/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await ConfirmedCourseCollection.findOne(query);
-      res.send(result)
-    })
+
+      try {
+        const query = { _id: new ObjectId(id) };
+        const result = await ConfirmedCourseCollection.findOne(query);
+
+        if (!result) {
+          return res.status(404).send({ error: "Course not found" });
+        }
+
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching course by ID:", error);
+        res.status(500).send({ error: "Invalid ID or Server Error" });
+      }
+    });
+
+
+
 
 
 
@@ -335,6 +374,42 @@ async function run() {
         .toArray();
       res.send(result)
     })
+
+
+    // ! Payment 
+
+   app.post('/payments' , async(req,res) =>{
+    const payment = req.body ;
+
+    const result = await paymentsCollection.insertOne(payment);
+
+    res.send(result);
+   })
+
+   app.get('/payments/:email' , async(req,res) =>{
+    const email = req.params.email;
+
+    const query = {email:email};
+
+    const result = await paymentsCollection.find(query).toArray()
+
+    res.send(result)
+   })
+
+   app.get('/payments/details/:id' ,  async(req , res) =>{
+
+    const id  =  req.params.id  ;
+
+    const query = {_id : new ObjectId(id)};
+
+    const result = await paymentsCollection.findOne(query);
+
+    res.send(result);
+   })
+
+
+
+
 
 
 
